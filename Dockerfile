@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 Venus Labs, Inc.
+# SPDX-License-Identifier: BSD-3-Clause
+
 FROM mhart/alpine-node:13.8.0
 
 RUN apk update && apk add --no-cache --virtual build-dependencies git python g++ make
