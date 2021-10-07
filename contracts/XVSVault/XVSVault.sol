@@ -160,7 +160,7 @@ contract XVSVault is XVSVaultStorage {
 
         // Update Delegate Amount
         if (address(pool.token) == address(xvsAddress)) {
-            _updateDelegate(address(msg.sender), uint96(user.amount));
+            _updateDelegate(address(msg.sender), uint96(user.amount.sub(user.pendingWithdrawals)));
         }
 
         emit Deposit(msg.sender, _rewardToken, _pid, _amount);
@@ -255,11 +255,6 @@ contract XVSVault is XVSVaultStorage {
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
         pool.token.transfer(address(msg.sender), _amount);
 
-        // Update Delegate Amount
-        if (address(pool.token) == address(xvsAddress)) {
-            _updateDelegate(address(msg.sender), uint96(user.amount.sub(user.pendingWithdrawals)));
-        }
-
         emit ExecutedWithdrawal(msg.sender, _rewardToken, _pid, _amount);
     }
 
@@ -279,6 +274,11 @@ contract XVSVault is XVSVaultStorage {
         uint lockedUntil = pool.lockPeriod.add(block.timestamp);
 
         pushWithdrawalRequest(user, requests, _amount, lockedUntil);
+
+        // Update Delegate Amount
+        if (address(pool.token) == address(xvsAddress)) {
+            _updateDelegate(address(msg.sender), uint96(user.amount.sub(user.pendingWithdrawals)));
+        }
         emit ReqestedWithdrawal(msg.sender, _rewardToken, _pid, _amount);
     }
 
@@ -405,7 +405,7 @@ contract XVSVault is XVSVaultStorage {
     }
 
     /**
-     * @notice Get the XVS stake balance of an account
+     * @notice Get the XVS stake balance of an account (excluding the pending withdrawals)
      * @param account The address of the account to check
      * @return The balance that user staked
      */
@@ -418,7 +418,7 @@ contract XVSVault is XVSVaultStorage {
         for (uint256 pid = 0; pid < length; ++pid) {
             if (address(poolInfo[pid].token) == address(xvsAddress)) {
                 UserInfo storage user = userInfos[xvsAddress][pid][account];
-                return uint96(user.amount);
+                return uint96(user.amount.sub(user.pendingWithdrawals));
             }
         }
         return uint96(0);
